@@ -1,15 +1,48 @@
-describe Airport.new(@plane, @max_capacity) do
-  it { is_expected.to respond_to(:land) }
-  // take plane off from an airport and confirm it is no longer there
-  // take_off method. puts "plane x has taken off"
-  it { is_expected.to respond_to(:take_off) }
-end
+describe ('Airport', () => {
+  let airport
+  let plane
+  let weather
 
-describe "#land" do
-  // expect land method to raise an exception if plane_at_airport == max_capacity
-  it "raises an exception when airport is full" do
-    if @plane == @max_capacity
-      expect { Airport.new(@plane, @max_capacity).land }.to raise_error(AirportFull, "Airport at maximum capacity")
-    end
-  end
-end
+  beforeEach(() => {
+    plane = jasmine.createSpy('plane')
+    weather = jasmine.createSpyObj('weather', ['isStormy'])
+    airport = new Airport(weather)
+  });
+  
+  it('has no planes by default', () => {
+    expect(airport.planes()).toEqual([])
+  })
+
+  describe('under normal conditions',() => {
+    beforeEach(() => {
+      weather.isStormy.and.returnValue(false);
+    });
+
+    it('can clear planes for landing', () => {
+      airport.clearForLanding(plane)
+      expect(airport.planes()).toEqual([plane])
+    })
+    
+    it('can clear planes for takeoff', () => {
+      airport.clearForLanding(plane)
+      airport.clearForTakeOff(plane)
+      expect(airport.planes()).toEqual([])
+    })
+  })
+
+  describe('under stormy conditions', () => {
+    beforeEach(() => {
+      weather.isStormy.and.returnValue(true);
+    });
+
+    it('does not clear planes for landing', () => {
+      expect(() => { airport.clearForLanding(plane); }).toThrowError('cannot land during storm');
+    });
+    
+    it('does not clear planes for takeoff', () => {
+      spyOn(airport, 'isStormy').and.returnValue(true)
+      expect(() => { airport.clearForTakeOff(plane) }).toThrowError('cannot takeoff during storm')
+    })
+  })
+})
+
